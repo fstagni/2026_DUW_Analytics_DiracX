@@ -406,6 +406,8 @@ title: data-ingestion
 
 We can always load "old" accounting data by **dump-and-restore**. The real question is **(near) real-time monitoring**.
 
+<strong>The extraction method depends on how each OLTP writes its data.</strong> There is no one-size-fits-all.
+
 **4 main approaches considered:**
 
 1. **CDC (Change Data Capture)** – e.g., `pymysqlreplication` on <span class="i-logos:mysql text-lg align-middle inline-block"></span> MySQL binlog → *considered a burden*
@@ -413,7 +415,33 @@ We can always load "old" accounting data by **dump-and-restore**. The real quest
 3. <span class="i-logos:mysql text-lg align-middle inline-block"></span> **MySQL triggers** (counters) polled by DiracX tasks
 4. **Incremental queries** (every 1-2 min) → `SELECT * WHERE LastUpdateTime > ?`
 
-Approach #4 (incremental queries) looks like the most generically suitable option
+Approach #4 (incremental queries) looks like the most generically suitable option, but the actual mechanism varies per source.
+
+---
+layout: top-title
+color: diracx-light
+align: cm
+title: extraction-sources
+---
+
+:: title ::
+
+# Extraction: One Pattern per Source
+
+:: content ::
+
+Each OLTP source has its own structure — and therefore its own extraction hook.
+
+| Source (from slide "Examples") | OLTP tables | Extraction hook |
+|---|---|---|
+| **JobDB**, **PilotAgentsDB** | `Jobs`, `PilotAgents` | `LastUpdateTime` |
+| **AccountingDB** | Dynamic per-type tables | `` |
+| **DX-ADR-009 counters** | Journal tables | `WHERE JournalID > ?` (native CDC) |
+| **External (Bookkeeping, etc.)** | Varies | API dump or incremental query |
+
+<AdmonitionType type='important' >
+The OLAP doesn't care <em>how</em> data is extracted — only that it arrives. Each source picks its own mechanism.
+</AdmonitionType>
 
 ---
 layout: top-title
@@ -424,7 +452,7 @@ title: dx-adr-009
 
 :: title ::
 
-# Connection to DX-ADR-009: Journalled Counters
+# DX-ADR-009: Journalled Counters as a CDC Source
 
 :: content ::
 
