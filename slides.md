@@ -595,6 +595,62 @@ title: ELT-T
 layout: top-title
 color: diracx-light
 align: cm
+title: time-series-nature
+---
+
+:: title ::
+
+# Most Visualizations Are Time-Series
+
+:: content ::
+
+Almost every dashboard question we want to answer is a **time-series question**:
+
+- *"How many jobs ran per day last month?"*
+- *"What's the pilot efficiency trend over the last quarter?"*
+- *"How does CPU consumption evolve week over week?"*
+- *"Show me the failure rate by site, over time"*
+
+This drives two design choices:
+1. **Bucketing by time** (hour / day / week / month) is the primary transformation
+2. **Time-range filters** are the most common query pattern — and the one that benefits most from columnar storage
+
+<AdmonitionType type='important' >
+The bucketing strategy below exists <em>because</em> our workload is overwhelmingly time-series.
+</AdmonitionType>
+
+---
+layout: top-title
+color: diracx-light
+align: cm
+title: duckdb-time-series
+---
+
+:: title ::
+
+# <span class="i-simple-icons:duckdb text-2xl align-middle inline-block"></span> DuckDB for Time-Series
+
+:: content ::
+
+DuckDB's SQL dialect goes far beyond basic `GROUP BY` for time-series workloads:
+
+| Feature | What it does | Example use |
+|---|---|---|
+| **`time_bucket()`** | Truncates timestamps to any interval | `time_bucket('1 day', SubmissionTime)` |
+| **Window functions** | Running totals, moving averages, rank | `SUM(NJobs) OVER (ORDER BY bucket ROWS 7 PRECEDING)` |
+| **`ASOF JOIN`** | Joins on nearest match in time | Align job counts with pilot efficiency at closest timestamp |
+| **`generate_series()`** | Create continuous date ranges | Fill gaps in sparse data with zero-count days |
+| **`QUALIFY`** | Filter on window results without subqueries | `QUALIFY ROW_NUMBER() OVER (PARTITION BY Site ORDER BY bucket DESC) <= 1` |
+| **`SUMMARIZE`** | Instant column statistics on raw parquet | Quick exploration before writing queries |
+
+<AdmonitionType type='note' >
+All of this runs <strong>in-process</strong> — no server to deploy. Each reader gets a full DuckDB engine.
+</AdmonitionType>
+
+---
+layout: top-title
+color: diracx-light
+align: cm
 title: bucketing-strategy
 ---
 
