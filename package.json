@@ -32,6 +32,6 @@
     "unplugin-icons": "^24.0.0"
   },
   "devDependencies": {
-    "@slidev/cli": "^52.9.1"
+    "@slidev/cli": "^52.6.0"
   }
 }
